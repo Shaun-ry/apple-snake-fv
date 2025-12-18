@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Apple Snake - Ultimate</title>
+<style>
+body{
+    margin:0;
+    height:100vh;
+    background:#111;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-family:Segoe UI,Arial;
+    color:white;
+}
+.game{
+    width:750px;
+    background:#181818;
+    padding:20px;
+    border-radius:26px;
+    box-shadow:0 20px 60px rgba(0,0,0,.7), 0 0 60px rgba(59,255,120,0.1);
+    position:relative;
+}
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+}
+.title{
+    font-size:36px;
+    font-weight:900;
+    color:#ff4d4d;
+    text-shadow:0 0 6px rgba(255,77,77,.5);
+    transition: all 0.4s ease;
+}
+.top-btns{
+    display:flex;
+    gap:10px;
+}
+.btn{
+    padding:8px 16px;
+    border-radius:16px;
+    border:2px solid #3bff78;
+    background:#1a1a1a;
+    color:#3bff78;
+    font-weight:bold;
+    cursor:pointer;
+    transition:all 0.3s ease;
+}
+.btn:hover{
+    background:#3bff78;
+    color:#1a1a1a;
+}
+.mode-indicator{
+    font-size:16px;
+    font-weight:bold;
+    margin-top:4px;
+    text-align:center;
+    transition:all 0.5s ease;
+}
+canvas{
+    display:block;
+    margin:14px auto;
+    background:linear-gradient(145deg,#1c1c1c,#2c2c2c);
+    border:4px solid #3bff78;
+    border-radius:16px;
+    box-shadow:0 0 10px rgba(59,255,120,0.3);
+    transition:border-color 0.5s ease, box-shadow 0.5s ease, transform 0.3s ease;
+}
+.instructions{
+    text-align:center;
+    font-size:18px;
+    margin-bottom:10px;
+}
+.instructions span{
+    margin:0 6px;
+    color:#3bff78;
+    font-weight:bold;
+    text-shadow:0 0 4px rgba(59,255,120,0.5);
+}
+.stats{
+    display:flex;
+    justify-content:center;
+    gap:15px;
+    margin-bottom:10px;
+}
+.stat{
+    background:#141414;
+    padding:10px 14px;
+    border-radius:12px;
+    text-align:center;
+    font-weight:bold;
+    box-shadow:0 0 6px rgba(59,255,120,0.2);
+    font-size:22px; /* réduit légèrement */
+    min-width:80px;
+}
+.stat span{
+    font-size:28px; /* réduit légèrement */
+}
+.best{color:#ffe44d;}
+.deaths{color:#ff5c5c;}
+.speed{color:#6cc9ff;}
+.appleInfo{
+    text-align:center;
+    font-size:16px;
+    color:#ffcc33;
+    margin-bottom:12px;
+    text-shadow:0 0 4px rgba(255,204,51,0.5);
+}
+
+/* GAME OVER PANEL */
+.gameover-panel{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,.85);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    border-radius:26px;
+    animation:fadeIn 0.4s ease;
+}
+.panel{
+    background:#1b1b1b;
+    padding:26px 30px;
+    border-radius:24px;
+    width:440px;
+    text-align:center;
+    box-shadow:0 0 12px rgba(255,0,0,0.4);
+    transform: scale(0);
+    animation:pop 0.4s forwards;
+}
+.panel h2{
+    margin:0 0 14px;
+    color:#ff4d4d;
+    text-shadow:0 0 6px rgba(255,77,77,0.5);
+}
+.panel p{
+    margin:8px 0;
+    color:#ddd;
+    font-weight:bold;
+}
+.panel .btn{
+    margin-top:14px;
+}
+
+/* Signature top right */
+.signature{
+    position:absolute;
+    top:10px;
+    right:16px;
+    font-size:12px;
+    color:#888;
+    font-weight:bold;
+}
+
+/* Animations */
+@keyframes fadeIn{
+    from{opacity:0;}
+    to{opacity:1;}
+}
+@keyframes pop{
+    from{transform:scale(0);}
+    to{transform:scale(1);}
+}
+@keyframes pulse{
+    0%{transform: scale(1);}
+    50%{transform: scale(1.05);}
+    100%{transform: scale(1);}
+}
+</style>
+</head>
+
+<body>
+<div class="game">
+
+<div class="header">
+    <div>
+        <div class="title">🍎 Apple Snake</div>
+        <div class="mode-indicator" id="modeIndicator">Mode : Normal</div>
+    </div>
+    <div class="top-btns">
+        <button class="btn" id="normalBtn">Mode Normal</button>
+        <button class="btn" id="hardBtn">Mode Difficile</button>
+    </div>
+</div>
+
+<canvas id="game" width="500" height="500"></canvas>
+
+<div class="instructions">
+    <span>Z ↑</span><span>Q ←</span><span>S ↓</span><span>D →</span>
+</div>
+
+<div class="appleInfo">
+    🍎 Rouge = 1 point | 🟡 Or = 2 points
+</div>
+
+<div class="stats">
+    <div class="stat">Score<br><span id="score">0</span></div>
+    <div class="stat best">Meilleur<br><span id="best">0</span></div>
+    <div class="stat deaths">Morts<br><span id="deaths">0</span></div>
+    <div class="stat speed">Vitesse<br><span id="speed">1.00x</span></div>
+</div>
+
+<div class="gameover-panel" id="gameoverPanel">
+    <div class="panel">
+        <h2>GAME OVER</h2>
+        <p id="finalScore"></p>
+        <p id="finalSpeed"></p>
+        <p id="finalMode"></p>
+        <button class="btn" onclick="restartGame()">Rejouer</button>
+    </div>
+</div>
+
+<div class="signature">Par Shaun</div>
+
+<!-- SONS -->
+<audio id="eatSound" src="https://freesound.org/data/previews/341/341695_3248244-lq.mp3"></audio>
+<audio id="specialSound" src="https://freesound.org/data/previews/256/256113_3263906-lq.mp3"></audio>
+<audio id="dieSound" src="https://freesound.org/data/previews/198/198841_285997-lq.mp3"></audio>
+
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const scoreEl = document.getElementById("score");
+const bestEl = document.getElementById("best");
+const deathsEl = document.getElementById("deaths");
+const speedEl = document.getElementById("speed");
+const modeIndicator = document.getElementById("modeIndicator");
+
+const normalBtn = document.getElementById("normalBtn");
+const hardBtn = document.getElementById("hardBtn");
+const gameoverPanel = document.getElementById("gameoverPanel");
+const finalScoreEl = document.getElementById("finalScore");
+const finalSpeedEl = document.getElementById("finalSpeed");
+const finalModeEl = document.getElementById("finalMode");
+
+const eatSound = document.getElementById("eatSound");
+const specialSound = document.getElementById("specialSound");
+const dieSound = document.getElementById("dieSound");
+
+const box = 20;
+const size = 500;
+
+let snake, dir, apple, obstacles;
+let score=0, best=0, deaths=0;
+let speed=1, running=false, interval;
+let mode="normal";
+
+// POMME
+const appleImg = new Image();
+appleImg.src=`data:image/svg+xml;utf8,
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<circle cx='50' cy='55' r='30' fill='%23e53935'/>
+<path d='M53 18 C65 10,75 20,68 28' fill='%234caf50'/>
+</svg>`;
+const specialAppleImg = new Image();
+specialAppleImg.src=`data:image/svg+xml;utf8,
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<circle cx='50' cy='55' r='30' fill='%23ffbb33'/>
+<path d='M53 18 C65 10,75 20,68 28' fill='%234caf50'/>
+</svg>`;
+
+function randomPos(){
+    return {x:Math.floor(Math.random()*(size/box))*box,y:Math.floor(Math.random()*(size/box))*box};
+}
+
+function generateObstacles(){
+    const arr=[];
+    if(mode==="hard"){
+        while(arr.length<12){
+            let p=randomPos();
+            if(arr.some(o=>Math.abs(o.x-p.x)<box*3 && Math.abs(o.y-p.y)<box*3)) continue;
+            if(snake.some(s=>s.x===p.x&&s.y===p.y)) continue;
+            arr.push(p);
+        }
+    }
+    return arr;
+}
+
+function generateApple(){
+    let p, isSpecial=false;
+    do{
+        p=randomPos();
+    }while(
+        snake.some(s=>s.x===p.x&&s.y===p.y) ||
+        obstacles.some(o=>o.x===p.x&&o.y===p.y)
+    );
+    if(Math.random()<0.2) isSpecial=true;
+    return {...p, special:isSpecial};
+}
+
+function initGame(){
+    snake=[{x:240,y:240}];
+    dir=null;
+    score=0;
+    speed = mode==="normal"?1:1;
+    obstacles=generateObstacles();
+    apple=generateApple();
+    scoreEl.textContent=score;
+    speedEl.textContent=speed.toFixed(2)+"x";
+    running=false;
+    clearInterval(interval);
+    gameoverPanel.style.display="none";
+
+    canvas.style.borderColor = mode==="normal"?"#3bff78":"#ff4d4d";
+    canvas.style.boxShadow = mode==="normal"?"0 0 10px rgba(59,255,120,0.3)":"0 0 10px rgba(255,77,77,0.3)";
+    modeIndicator.textContent = "Mode : " + (mode==="normal"?"Normal":"Difficile");
+
+    draw();
+}
+
+function startGame(){
+    if(running) return;
+    running=true;
+    interval=setInterval(draw,160/speed);
+}
+
+document.addEventListener("keydown",e=>{
+    const k=e.key.toLowerCase();
+    if(!running&&["z","q","s","d","arrowup","arrowdown","arrowleft","arrowright"].includes(k)) startGame();
+
+    if(k==="z"||k==="arrowup"){ if(dir!=="DOWN") dir="UP"; }
+    if(k==="s"||k==="arrowdown"){ if(dir!=="UP") dir="DOWN"; }
+    if(k==="q"||k==="arrowleft"){ if(dir!=="RIGHT") dir="LEFT"; }
+    if(k==="d"||k==="arrowright"){ if(dir!=="LEFT") dir="RIGHT"; }
+});
+
+function draw(){
+    const grd = ctx.createLinearGradient(0,0,size,size);
+    grd.addColorStop(0,"#1c1c1c");
+    grd.addColorStop(1,"#2c2c2c");
+    ctx.fillStyle=grd;
+    ctx.fillRect(0,0,size,size);
+
+    obstacles.forEach(o=>{
+        ctx.fillStyle="#666";
+        ctx.fillRect(o.x,o.y,box,box);
+        ctx.strokeStyle="#888";
+        ctx.strokeRect(o.x,o.y,box,box);
+    });
+
+    snake.forEach((p,i)=>{
+        ctx.fillStyle=i?"#24cc60":"#3bff78";
+        ctx.fillRect(p.x,p.y,box,box);
+        if(i){
+            ctx.strokeStyle="rgba(36,204,96,0.4)";
+            ctx.strokeRect(p.x,p.y,box,box);
+        }
+    });
+
+    ctx.drawImage(apple.special?specialAppleImg:appleImg,apple.x,apple.y,box,box);
+
+    if(!running||!dir) return;
+
+    let head = {...snake[0]};
+    if(dir==="UP") head.y-=box;
+    if(dir==="DOWN") head.y+=box;
+    if(dir==="LEFT") head.x-=box;
+    if(dir==="RIGHT") head.x+=box;
+
+    if(head.x<0||head.x>=size||head.y<0||head.y>=size||
+       snake.some(s=>s.x===head.x&&s.y===head.y)||
+       obstacles.some(o=>o.x===head.x&&o.y===head.y)){
+        die();
+        return;
+    }
+
+    if(head.x===apple.x&&head.y===apple.y){
+        let points = apple.special?2:1;
+        score += points;
+        scoreEl.textContent=score;
+        speed += 0.04;
+        speedEl.textContent=speed.toFixed(2)+"x";
+
+        if(apple.special) specialSound.currentTime=0, specialSound.play();
+        else eatSound.currentTime=0, eatSound.play();
+
+        clearInterval(interval);
+        interval=setInterval(draw,160/speed);
+        apple=generateApple();
+    } else snake.pop();
+
+    snake.unshift(head);
+}
+
+function die(){
+    deaths++;
+    deathsEl.textContent=deaths;
+    if(score>best){ best=score; bestEl.textContent=best; }
+    running=false;
+    clearInterval(interval);
+    dieSound.currentTime=0; dieSound.play();
+    finalScoreEl.textContent = "Score : " + score;
+    finalSpeedEl.textContent = "Vitesse : " + speed.toFixed(2) + "x";
+    finalModeEl.textContent = "Mode : " + (mode==="normal"?"Normal":"Difficile");
+    gameoverPanel.style.display="flex";
+}
+
+function restartGame(){
+    initGame();
+}
+
+normalBtn.onclick = ()=>{
+    mode="normal";
+    animateModeChange("#3bff78");
+    initGame();
+};
+hardBtn.onclick = ()=>{
+    mode="hard";
+    animateModeChange("#ff4d4d");
+    initGame();
+};
+
+// Animation changement de mode
+function animateModeChange(color){
+    canvas.style.borderColor = color;
+    canvas.style.boxShadow = color==="#3bff78"?"0 0 12px rgba(59,255,120,0.4)":"0 0 12px rgba(255,77,77,0.4)";
+    modeIndicator.style.color=color;
+    document.querySelector(".title").style.transform="scale(1.05)";
+    // Pulsation du canvas
+    canvas.style.animation="pulse 0.5s";
+    setTimeout(()=>{canvas.style.animation="";document.querySelector(".title").style.transform="scale(1)";},500);
+}
+
+initGame();
+</script>
+</body>
+</html>
